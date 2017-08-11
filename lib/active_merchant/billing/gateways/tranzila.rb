@@ -33,9 +33,9 @@ module ActiveMerchant #:nodoc:
     #
     #   response.inspect
     class TranzilaGateway < Gateway
-
-      SHEKEL_DOLLAR_URL = 'https://secure5.tranzila.com/cgi-bin/tranzila31.cgi'
-      MULTICURRENCY_URL = 'https://secure5.tranzila.com/cgi-bin/tranzila36a.cgi'
+      SHEKEL_DOLLAR_URL         = 'https://secure5.tranzila.com/cgi-bin/tranzila31.cgi'
+      MULTICURRENCY_URL         = 'https://secure5.tranzila.com/cgi-bin/tranzila36a.cgi'
+      SHEKEL_DOLLAR_EXPRESS_URL = 'https://secure5.tranzila.com/cgi-bin/tranzila71pme.cgi'
 
       RESPONSE_MESSAGES = {
         '000' => 'Transaction approved',
@@ -238,6 +238,7 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         requires!(options, :supplier, :currency)
         @options = options
+        self.class.const_set(:SHEKEL_DOLLAR_URL, SHEKEL_DOLLAR_EXPRESS_URL) if options[:tranzila_express] 
         super
       end
 
@@ -335,7 +336,11 @@ module ActiveMerchant #:nodoc:
       private
 
       def parse(body)
-        response_to_h(body.try(:chop!).try(:chop!))
+        begin
+          response_to_h(body.try(:chop!).try(:chop!))
+        rescue
+          body
+        end
       end
 
       def response_to_h(body)
@@ -345,12 +350,13 @@ module ActiveMerchant #:nodoc:
 
       def commit(action, money, creditcard, options = {})
         response = parse(ssl_post(multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL, post_data(action, money, creditcard, options)))
-
-        Response.new(successful?(response), message_from(response), response,
-          :test => test?,
-          :authorization => response['ConfirmationCode'],
-          :cvv_result => response['CVVstatus']
-        )
+        # response = parse(ssl_post(multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL, "task=Doverify&tranmode=V&sum=23.00&ccno=4111111111111111&expyear=22&expmonth=2&expdate=222&mycvv=222&cred_type=1&currency=1&myid=0962362&supplier=ttxekspeda&email=geliyahu@hotmail.com"))
+        response.is_a?(Hash) ? 
+          Response.new(successful?(response), message_from(response), response,
+            :test => test?,
+            :authorization => response['ConfirmationCode'],
+            :cvv_result => response['CVVstatus']):
+          Response.new(false, response)
       end
 
       def multicurrency?
