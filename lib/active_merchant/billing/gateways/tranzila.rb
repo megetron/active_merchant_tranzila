@@ -356,7 +356,7 @@ module ActiveMerchant #:nodoc:
 
       def commit(action, money, creditcard, options = {})
         url = multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL
-        url = SHEKEL_DOLLAR_EXPRESS_URL if options[:tranzila_express] 
+        url = SHEKEL_DOLLAR_EXPRESS_URL if @options[:tranzila_express] 
         response = parse(ssl_post(url, post_data(action, money, creditcard, options)))
 
         response.is_a?(Hash) ? 
