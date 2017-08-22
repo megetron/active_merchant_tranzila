@@ -36,6 +36,7 @@ module ActiveMerchant #:nodoc:
       SHEKEL_DOLLAR_URL         = 'https://secure5.tranzila.com/cgi-bin/tranzila31.cgi'
       MULTICURRENCY_URL         = 'https://secure5.tranzila.com/cgi-bin/tranzila36a.cgi'
       SHEKEL_DOLLAR_EXPRESS_URL = 'https://secure5.tranzila.com/cgi-bin/tranzila71pme.cgi'
+      MASK_IP_URL               = 'https://secure5.tranzila.com/cgi-bin/tranzila31cl.cgi'
 
       RESPONSE_MESSAGES = {
         '000' => 'Transaction approved',
@@ -238,7 +239,6 @@ module ActiveMerchant #:nodoc:
       def initialize(options = {})
         requires!(options, :supplier, :currency)
         @options = options
-        self.class.const_set(:SHEKEL_DOLLAR_URL, SHEKEL_DOLLAR_EXPRESS_URL) if options[:tranzila_express] 
         super
       end
 
@@ -333,6 +333,12 @@ module ActiveMerchant #:nodoc:
         commit('refund', money, creditcard, options)
       end
 
+      def ip_mask
+        requires!(@options, :supplier, :TranzilaPW)
+        response = ssl_post(MASK_IP_URL, post_data('ip_mask', nil, nil, @options))
+        Response.new(response == "1", response)
+      end
+
       private
 
       def parse(body)
@@ -349,8 +355,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def commit(action, money, creditcard, options = {})
-        response = parse(ssl_post(multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL, post_data(action, money, creditcard, options)))
-        # response = parse(ssl_post(multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL, "task=Doverify&tranmode=V&sum=23.00&ccno=4111111111111111&expyear=22&expmonth=2&expdate=222&mycvv=222&cred_type=1&currency=1&myid=0962362&supplier=ttxekspeda&email=geliyahu@hotmail.com"))
+        url = multicurrency? ? MULTICURRENCY_URL : SHEKEL_DOLLAR_URL
+        url = SHEKEL_DOLLAR_EXPRESS_URL if options[:tranzila_express] 
+        response = parse(ssl_post(url, post_data(action, money, creditcard, options)))
+
         response.is_a?(Hash) ? 
           Response.new(successful?(response), message_from(response), response,
             :test => test?,
@@ -376,6 +384,7 @@ module ActiveMerchant #:nodoc:
         return refund_parametes(money, creditcard, options) if action == 'refund'
         return authorize_parameters(money, creditcard, options) if action == 'authorize'
         return capture_parameters(money, creditcard, options) if action == 'capture'
+        return ip_mask_parameters(options) if action == 'ip_mask'
       end
 
       def capture_parameters(money, creditcard, options = {})
@@ -402,6 +411,13 @@ module ActiveMerchant #:nodoc:
 
       def purchase_parameters(money, creditcard, options = {})
         to_query_s(default_parameters_hash(money, creditcard, options))
+      end
+      
+      def ip_mask_parameters(options = {})
+        to_query_s({
+          supplier:   options[:supplier],
+          TranzilaPW: options[:TranzilaPW]
+          })
       end
 
       def default_parameters_hash(money, creditcard, options = {})
