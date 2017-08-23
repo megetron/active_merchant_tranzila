@@ -441,6 +441,7 @@ module ActiveMerchant #:nodoc:
           :cred_type => options[:cred_type],
           :currency => @options[:currency],
           :myid => options[:myid],
+
           #transaction with monthly installments not supported yet
           #:fpay => options[:myid],
           #:spay => options[:spay],
@@ -450,6 +451,7 @@ module ActiveMerchant #:nodoc:
           :supplier => @options[:supplier]
         }
         default_params[:email] = options[:email] if options.key?(:email)
+        default_params[:TranzilaPW] = @options[:TranzilaPW] if @options.key?(:TranzilaPW)
         default_params
       end
 
