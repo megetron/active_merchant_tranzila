@@ -452,7 +452,7 @@ module ActiveMerchant #:nodoc:
         }
 
         [:email, :company, :contact].each do |param|
-          default_params[param] = options[param].encode("windows-1255") if options.key?(param)
+          default_params[param] = options[param].force_encoding("UTF-8").encode("windows-1255") if options.key?(param)
         end
 
         default_params[:TranzilaPW] = @options[:TranzilaPW] if @options.key?(:TranzilaPW)
