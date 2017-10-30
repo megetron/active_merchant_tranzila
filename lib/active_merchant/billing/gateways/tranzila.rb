@@ -464,7 +464,7 @@ module ActiveMerchant #:nodoc:
           puts "12. #{options[param].force_encoding('windows-1255').force_encoding('UTF-8')}"
 
 
-          default_params[param] = options[param].force_encoding("UTF-8").encode("windows-1255","UTF-8") if options.key?(param)
+          default_params[param] = options[param].force_encoding("windows-1255") if options.key?(param)
         end
 
         default_params[:TranzilaPW] = @options[:TranzilaPW] if @options.key?(:TranzilaPW)
