@@ -452,13 +452,10 @@ module ActiveMerchant #:nodoc:
         }
 
         [:email, :company, :contact].each do |param|
-          binding.pry
           puts options[param]
           puts options[param].encoding
           puts options[param].force_encoding("UTF-8").encode("windows-1255")
           puts options[param].encode("windows-1255","UTF-8")
-          puts options[param].force_encoding("UTF-8").encode("windows-1252")
-          puts options[param].force_encoding("UTF-8").encode("windows-1252")
           default_params[param] = options[param].force_encoding("UTF-8").encode("windows-1255","UTF-8") if options.key?(param)
         end
 
